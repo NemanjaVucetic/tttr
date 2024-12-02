@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  project_service:
+    image: project_service
+    container_name: project_service
+    hostname: ${PROJECT_SERVICE_HOST}
+    build:
+      context: ./project_service/
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      PROJECT_DB_HOST: ${PROJECT_DB_HOST}
+      PROJECT_DB_PORT: ${PROJECT_DB_PORT}
+      PROJECT_SERVICE_PORT: ${PROJECT_SERVICE_PORT}
+      USER_SERVICE_HOST: ${USER_SERVICE_HOST}
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+    depends_on:
+      - project_db
+    networks:
+      - network
+
+  user_service:
+    image: user_service
+    container_name: user_service
+    hostname: ${USER_SERVICE_HOST}
+    build:
+      context: ./user_service/
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      USER_DB_HOST: ${USER_DB_HOST}
+      USER_DB_PORT: ${USER_DB_PORT}
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+    depends_on:
+      - user_db
+    networks:
+      - network
+
+  notification_service:
+    image: notification_service
+    container_name: notification_service
+    hostname: ${NOTIFICATION_SERVICE_HOST}
+    build:
+      context: ./notification_service/
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      NOTIFICATION_DB_HOST: ${NOTIFICATION_DB_HOST}
+      NOTIFICATION_DB_PORT: ${NOTIFICATION_DB_PORT}
+      NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
+      CASS_DB: "${NOTIFICATION_DB_HOST}:${NOTIFICATION_DB_PORT}"
+
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - network
+
+  api_gateway:
+    build:
+      context: ./api_gateway/
+      dockerfile: Dockerfile
+    container_name: api_gateway
+    hostname: ${API_GATEWAY_HOST}
+    restart: on-failure
+    ports:
+      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
+    depends_on:
+      - project_service
+      - user_service
+      - notification_service
+    networks:
+      - network
+
+  project_db:
+    image: mongo
+    container_name: project_db
+    restart: on-failure
+    networks:
+      - network
+    volumes:
+      - project_db_data:/data/db
+
+  user_db:
+    image: mongo
+    container_name: user_db
+    restart: on-failure
+    networks:
+      - network
+    volumes:
+      - user_db_data:/data/db
+
+  cassandra:
+    image: cassandra
+    container_name: cassandra
+    restart: always
+    ports:
+      - "${NOTIFICATION_DB_PORT}:${NOTIFICATION_DB_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - cass_store:/var/lib/cassandra/data
+    networks:
+      - network
+
+volumes:
+  cass_store:
+  user_db_data:
+  project_db_data:
+
+networks:
+  network:
+    driver: bridge
