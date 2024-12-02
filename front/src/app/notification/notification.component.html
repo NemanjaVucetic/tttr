@@ -1,0 +1,14 @@
+<!-- notification.component.html -->
+<div *ngIf="notifications.length > 0">
+    <h2>Your Notifications</h2>
+    <ul>
+      <li *ngFor="let notification of notifications">
+        <p><strong>{{ notification.text }}</strong></p>
+        <p>Status: {{ notification.status }}</p>
+      </li>
+    </ul>
+  </div>
+  <div *ngIf="notifications.length === 0">
+    <p>No notifications available.</p>
+  </div>
+  
