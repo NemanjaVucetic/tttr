@@ -12,10 +12,13 @@ import { ProjectService } from './project.service';
 import { ProjectDetailsComponent } from './project-details/project-details.component';
 import { ProjectCreateComponent } from './project-create/project-create.component';
 import { NotificationComponent } from './notification/notification.component';
+import { NotificationService } from './notification.service';
+import { ProjectListComponent } from './project-list/project-list.component';
+import { UserListComponent } from './user-list/user-list.component';
 
 // Funkcija za dobijanje tokena iz localStorage
 export function tokenGetter() {
-  return localStorage.getItem('jwtToken');
+  return localStorage.getItem('token');
 }
 
 @NgModule({
@@ -25,7 +28,9 @@ export function tokenGetter() {
     RegisterComponent,
     ProjectDetailsComponent,
     ProjectCreateComponent,
-    NotificationComponent
+    NotificationComponent,
+    ProjectListComponent,
+    UserListComponent,
   ],
   imports: [
     BrowserModule,
@@ -41,7 +46,7 @@ export function tokenGetter() {
       }
     })
   ],
-  providers: [ProjectService, JwtHelperService],  // Dodaj JwtHelperService u providere
+  providers: [ProjectService, JwtHelperService,NotificationService],  // Dodaj JwtHelperService u providere
   bootstrap: [AppComponent]
 })
 export class AppModule { }
